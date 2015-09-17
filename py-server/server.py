@@ -10,7 +10,7 @@ from shape_importer.util import walk2
 from db_utils.postgis import geojson_from_table
 
 
-STATIC_FOLDER = 'static'
+STATIC_FOLDER = '../client'
 ALLOWED_EXTENSIONS = 'zip'
 
 CONN_STRING = 'dbname=mygov user=mygov password=mygov'
