@@ -27,7 +27,8 @@ def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1,
         '-W', 'latin1',
         '-s', str(srid),
         shape_path,
-        table]
+        table
+    ]
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=log_file)
 
     cursor = conn.cursor()
@@ -71,21 +72,3 @@ def shape2pgsql(config, shapefile):
                    IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
                    IMPORT_MODE_SPATIAL_INDEX)
     vacuum_analyze(conn, full_table_name)
-
-
-if __name__ == '__main__':
-    import config
-    import psycopg2
-    import os.path
-    from sys import argv
-
-    conn = psycopg2.connect('host=%s dbname=%s user=%s password=%s' % (
-        config.db['host'], config.db['name'],
-        config.db['user'], config.db['password']))
-
-    for shape_file in argv[1:len(argv)]:
-        table = os.path.splitext(os.path.split(shape_file)[1])[0]
-        shape_to_pgsql(conn, shape_file, table,
-                       IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
-                       IMPORT_MODE_SPATIAL_INDEX)
-        vacuum_analyze(conn, table)

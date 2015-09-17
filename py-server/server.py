@@ -4,6 +4,7 @@ import tempfile
 import zipfile
 
 from shape_importer.shp2pgsql import shape2pgsql
+from shape_importer.tab2pgsql import shape2pgsql as ogr2ogr
 from shape_importer.util import walk2
 
 
@@ -23,8 +24,8 @@ def create_shapefile(input_zip):
                 return os.path.join(temp_dir, f)
 
 
-@app.route('/api/import')
-def import_shapefile():
+@app.route('/api/import/shp2pgsql')
+def import_shapefile_shp2pgsql():
     zip_name = '/vagrant/shapefiles/streetshighways.zip'
     filename = create_shapefile(zip_name)
 
@@ -38,6 +39,24 @@ def import_shapefile():
         shp2pgsql='shp2pgsql')
 
     shape2pgsql(config, filename)
+    return '200'
+
+
+@app.route('/api/import/ogr2ogr')
+def import_shapefile_ogr2ogr():
+    zip_name = '/vagrant/shapefiles/streetshighways.zip'
+    filename = create_shapefile(zip_name)
+
+    config = dict(
+        db=dict(
+            user='mygov',
+            name='mygov',
+            password='mygov',
+            host='localhost'),
+        user='mygov1',
+        shp2pgsql='shp2pgsql')
+
+    ogr2ogr(config, filename)
     return '200'
 
 
