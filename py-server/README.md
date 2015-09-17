@@ -1,0 +1,1 @@
+curl -i -F file=@/vagrant/shapefiles/streetshighways.zip http://localhost:4002/api/import/shp2pgsql
