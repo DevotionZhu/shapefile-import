@@ -72,3 +72,4 @@ def shape2pgsql(config, shapefile):
                    IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
                    IMPORT_MODE_SPATIAL_INDEX)
     vacuum_analyze(conn, full_table_name)
+    return full_table_name
