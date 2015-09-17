@@ -1,14 +1,17 @@
 #!/usr/bin/python
 
-"""
+'''
 This is mostly a Python wrapper for the shp2pgsql command line utility.
-"""
+'''
 
 import subprocess
 import util
-from importer_modes import *
+from importer_modes import IMPORT_MODE_CREATE, IMPORT_MODE_APPEND,\
+    IMPORT_MODE_STRUCTURE, IMPORT_MODE_DATA, IMPORT_MODE_SPATIAL_INDEX
 
-def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1, log_file=None, batch_size=1000):
+
+def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1,
+                   log_file=None, batch_size=1000):
     modeflags = {
         str(IMPORT_MODE_CREATE): "c",
         str(IMPORT_MODE_APPEND): "a",
@@ -19,9 +22,10 @@ def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1, log_file=None
 
     args = [
         config['shp2pgsql'],
-        "-%s" % ''.join([modeflags[f] for f in modeflags.keys() if int(f) & mode]),
-        "-W", "latin1",
-        "-s", str(srid),
+        '-' + ''.join([
+            modeflags[f] for f in modeflags.keys() if int(f) & mode]),
+        '-W', 'latin1',
+        '-s', str(srid),
         shape_path,
         table]
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=log_file)
@@ -29,7 +33,8 @@ def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1, log_file=None
     cursor = conn.cursor()
     try:
         with p.stdout as stdout:
-            for commands in util.groupsgen(util.read_until(stdout, ';'), batch_size):
+            for commands in util.groupsgen(util.read_until(stdout, ';'),
+                                           batch_size):
                 command = ''.join(commands).strip()
                 if len(command) > 0:
                     cursor.execute(command)
@@ -39,6 +44,7 @@ def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1, log_file=None
         raise
     finally:
         cursor.close()
+
 
 def vacuum_analyze(conn, table):
     isolation_level = conn.isolation_level
@@ -50,19 +56,22 @@ def vacuum_analyze(conn, table):
         cursor.close()
         conn.set_isolation_level(isolation_level)
 
+
 def shape2pgsql(config, shapefile):
     import psycopg2
     import os.path
-    from sys import argv
 
-    conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % \
-        (config['db']['host'], config['db']['name'], config['db']['user'], config['db']['password']))
-
+    conn = psycopg2.connect('host=%s dbname=%s user=%s password=%s' % (
+        config['db']['host'], config['db']['name'],
+        config['db']['user'], config['db']['password']))
 
     table = os.path.splitext(os.path.split(shapefile)[1])[0]
     full_table_name = config['user'] + '.' + table
-    shape_to_pgsql(config, conn, shapefile, full_table_name, IMPORT_MODE_CREATE + IMPORT_MODE_DATA + IMPORT_MODE_SPATIAL_INDEX)
+    shape_to_pgsql(config, conn, shapefile, full_table_name,
+                   IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
+                   IMPORT_MODE_SPATIAL_INDEX)
     vacuum_analyze(conn, full_table_name)
+
 
 if __name__ == '__main__':
     import config
@@ -70,10 +79,13 @@ if __name__ == '__main__':
     import os.path
     from sys import argv
 
-    conn = psycopg2.connect("host=%s dbname=%s user=%s password=%s" % \
-        (config.db['host'], config.db['name'], config.db['user'], config.db['password']))
+    conn = psycopg2.connect('host=%s dbname=%s user=%s password=%s' % (
+        config.db['host'], config.db['name'],
+        config.db['user'], config.db['password']))
 
     for shape_file in argv[1:len(argv)]:
         table = os.path.splitext(os.path.split(shape_file)[1])[0]
-        shape_to_pgsql(conn, shape_file, table, IMPORT_MODE_CREATE + IMPORT_MODE_DATA + IMPORT_MODE_SPATIAL_INDEX)
+        shape_to_pgsql(conn, shape_file, table,
+                       IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
+                       IMPORT_MODE_SPATIAL_INDEX)
         vacuum_analyze(conn, table)
