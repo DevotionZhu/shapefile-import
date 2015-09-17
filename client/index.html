@@ -13,10 +13,16 @@
     <link rel="stylesheet" href="http://js.arcgis.com/3.14/esri/css/esri.css">
 
     <script src="http://js.arcgis.com/3.14/"></script>
+
+    <!-- Terraformer reference -->
+    <script src="./vendor/terraformer/terraformer.min.js"></script>
+    <script src="./vendor/terraformer-arcgis-parser/terraformer-arcgis-parser.min.js"></script>
+
     <script>
       var map;
 
       require([
+        "./src/geojsonlayer.js",
         "esri/config",
         "esri/InfoTemplate",
         "esri/map",
@@ -39,7 +45,7 @@
         "dijit/layout/ContentPane",
         "dojo/domReady!"
       ],
-        function (
+        function (GeoJsonLayer,
         esriConfig, InfoTemplate, Map, request, scaleUtils, FeatureLayer,
         SimpleRenderer, PictureMarkerSymbol, SimpleFillSymbol, SimpleLineSymbol,
         dom, JSON, on, parser, sniff, arrayUtils, Color, lang
@@ -121,7 +127,10 @@
                 // var layerName = response.featureCollection.layers[0].layerDefinition.name;
                 var layerName = 'Imported layer';
                 dom.byId('upload-status').innerHTML = '<b>Loaded: </b>' + layerName;
-                addShapefileToMap(convertToEsri(response));
+                var geoJsonLayer3 = new GeoJsonLayer({
+                    data: response[0].data
+                });
+                addShapefileToMap(geoJsonLayer3);
               }),
               error: lang.hitch(this, errorHandler)
             });
@@ -134,7 +143,7 @@
               "<p style='color:red'>" + error.message + "</p>";
             }
 
-            function addShapefileToMap (featureCollection) {
+            function addShapefileToMap (layer) {
               //add the shapefile to the map and zoom to the feature collection extent
               //If you want to persist the feature collection when you reload browser you could store the collection in
               //local storage by serializing the layer using featureLayer.toJson()  see the 'Feature Collection in Local Storage' sample
@@ -142,231 +151,31 @@
               var fullExtent;
               var layers = [];
 
-              arrayUtils.forEach(featureCollection.layers, function (layer) {
-                var infoTemplate = new InfoTemplate("Details", "${*}");
-                var featureLayer = new FeatureLayer(layer, {
-                  infoTemplate: infoTemplate
-                });
-                //associate the feature with the popup on click to enable highlight and zoom to
-                featureLayer.on('click', function (event) {
-                  map.infoWindow.setFeatures([event.graphic]);
-                });
-                //change default symbol if desired. Comment this out and the layer will draw with the default symbology
-                changeRenderer(featureLayer);
-                fullExtent = fullExtent ?
-                  fullExtent.union(featureLayer.fullExtent) : featureLayer.fullExtent;
-                layers.push(featureLayer);
-              });
-              map.addLayers(layers);
-              map.setExtent(fullExtent.expand(1.25), true);
+              // arrayUtils.forEach(featureCollection.layers, function (layer) {
+
+              // });
+
+              // var infoTemplate = new InfoTemplate("Details", "${*}");
+              //   var featureLayer = new FeatureLayer(layer, {
+              //     infoTemplate: infoTemplate
+              //   });
+              //   //associate the feature with the popup on click to enable highlight and zoom to
+              //   featureLayer.on('click', function (event) {
+              //     map.infoWindow.setFeatures([event.graphic]);
+              //   });
+              //   //change default symbol if desired. Comment this out and the layer will draw with the default symbology
+              //   changeRenderer(featureLayer);
+              //   fullExtent = fullExtent ?
+              //     fullExtent.union(featureLayer.fullExtent) : featureLayer.fullExtent;
+              //   layers.push(featureLayer);
+
+              map.addLayers(layer);
+              // map.setExtent(fullExtent.expand(1.25), true);
 
               dom.byId('upload-status').innerHTML = "";
             }
 
-            function convertToEsri(response){
-              var esri = {
-                "featureCollection": {
-                  "layers": [
-                    {
-                      "layerDefinition": {
-                        "currentVersion": 10.3,
-                        "id": 0,
-                        "name": "statplanet_australia",
-                        "type": "Feature Layer",
-                        "displayField": "",
-                        "description": "",
-                        "copyrightText": "",
-                        "defaultVisibility": true,
-                        "relationships": [],
-                        "isDataVersioned": false,
-                        "supportsCalculate": true,
-                        "supportsAttachmentsByUploadId": true,
-                        "supportsRollbackOnFailureParameter": true,
-                        "supportsStatistics": true,
-                        "supportsAdvancedQueries": true,
-                        "supportsValidateSql": true,
-                        "supportsCoordinatesQuantization": true,
-                        "advancedQueryCapabilities": {
-                          "supportsPagination": true,
-                          "supportsQueryWithDistance": true,
-                          "supportsReturningQueryExtent": true,
-                          "supportsStatistics": true,
-                          "supportsOrderBy": true,
-                          "supportsDistinct": true
-                        },
-                        "geometryType": "esriGeometryPolygon",
-                        "minScale": 0,
-                        "maxScale": 0,
-                        "extent": {
-                          "xmin": 10777613.372892188,
-                          "ymin": -5412762.57466373,
-                          "xmax": 17711534.89255682,
-                          "ymax": -1030817.1188057784,
-                          "spatialReference": {
-                            "wkid": 102100,
-                            "latestWkid": 3857
-                          }
-                        },
-                        "drawingInfo": {
-                          "renderer": {
-                            "type": "simple",
-                            "symbol": {
-                              "type": "esriSFS",
-                              "style": "esriSFSSolid",
-                              "color": [
-                                76,
-                                129,
-                                205,
-                                191
-                              ],
-                              "outline": {
-                                "type": "esriSLS",
-                                "style": "esriSLSSolid",
-                                "color": [
-                                  0,
-                                  0,
-                                  0,
-                                  255
-                                ],
-                                "width": 0.75
-                              }
-                            }
-                          },
-                          "transparency": 0,
-                          "labelingInfo": null
-                        },
-                        "allowGeometryUpdates": true,
-                        "hasAttachments": false,
-                        "htmlPopupType": "",
-                        "hasM": false,
-                        "hasZ": false,
-                        "objectIdField": "FID",
-                        "globalIdField": "",
-                        "typeIdField": "",
-                        "fields": [
-                          {
-                            "name": "FID",
-                            "type": "esriFieldTypeInteger",
-                            "alias": "FID",
-                            "sqlType": "sqlTypeOther",
-                            "nullable": false,
-                            "editable": false,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "SA4_CODE11",
-                            "type": "esriFieldTypeString",
-                            "alias": "SA4_CODE11",
-                            "sqlType": "sqlTypeOther",
-                            "length": 3,
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "SA4_NAME11",
-                            "type": "esriFieldTypeString",
-                            "alias": "SA4_NAME11",
-                            "sqlType": "sqlTypeOther",
-                            "length": 50,
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "GCC_CODE11",
-                            "type": "esriFieldTypeString",
-                            "alias": "GCC_CODE11",
-                            "sqlType": "sqlTypeOther",
-                            "length": 5,
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "GCC_NAME11",
-                            "type": "esriFieldTypeString",
-                            "alias": "GCC_NAME11",
-                            "sqlType": "sqlTypeOther",
-                            "length": 50,
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "STE_CODE11",
-                            "type": "esriFieldTypeString",
-                            "alias": "STE_CODE11",
-                            "sqlType": "sqlTypeOther",
-                            "length": 1,
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "STE_NAME11",
-                            "type": "esriFieldTypeString",
-                            "alias": "STE_NAME11",
-                            "sqlType": "sqlTypeOther",
-                            "length": 50,
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          },
-                          {
-                            "name": "ALBERS_SQM",
-                            "type": "esriFieldTypeDouble",
-                            "alias": "ALBERS_SQM",
-                            "sqlType": "sqlTypeOther",
-                            "nullable": true,
-                            "editable": true,
-                            "domain": null,
-                            "defaultValue": null
-                          }
-                        ],
-                        "indexes": [],
-                        "types": [],
-                        "templates": [
-                          {
-                            "name": "New Feature",
-                            "description": "",
-                            "drawingTool": "esriFeatureEditToolPolygon",
-                            "prototype": {
-                              "attributes": {
-                                "SA4_CODE11": null,
-                                "SA4_NAME11": null,
-                                "GCC_CODE11": null,
-                                "GCC_NAME11": null,
-                                "STE_CODE11": null,
-                                "STE_NAME11": null,
-                                "ALBERS_SQM": null
-                              }
-                            }
-                          }
-                        ],
-                        "supportedQueryFormats": "JSON",
-                        "hasStaticData": false,
-                        "maxRecordCount": -1,
-                        "capabilities": "Create,Delete,Query,Update,Editing"
-                      },
-                      "featureSet":{
-                        "features": response[0].data.features
-                      }
-                    }
-                  ]
-                }
 
-              }
-              return esri;
-
-          }
 
 
             function changeRenderer (layer) {
