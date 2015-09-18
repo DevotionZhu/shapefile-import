@@ -22,8 +22,23 @@ install_ubuntu_packages() {
         echo "Installing python gdal"
         sudo apt-get install -y python-gdal
     fi
+    if [ $(pip freeze | grep -c "dbfpy") -eq 0 ];
+    then
+        echo "Installing python dbfpy"
+        install_python_dbfpy
+    fi
 }
 
+
+install_python_dbfpy() {
+    wget http://sourceforge.net/projects/dbfpy/files/dbfpy/2.3.1/dbfpy-2.3.1.tar.gz
+    tar xvf dbfpy-2.3.1.tar.gz
+    cd dbfpy-2.3.1
+    sudo python setup.py install
+    cd ..
+    rm dbfpy-2.3.1.tar.gz
+    rm -rf dbfpy-2.3.1
+}
 
 install_requirements() {
     sudo pip install -r requirements.txt
