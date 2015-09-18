@@ -25,7 +25,7 @@ def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1,
         '-' + ''.join([
             modeflags[f] for f in modeflags.keys() if int(f) & mode]),
         '-W', encoding,
-        '-s', str(srid),
+        '-s', str(srid) + ':4326',
         shape_path,
         table
     ]
