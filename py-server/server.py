@@ -69,7 +69,7 @@ def import_shapefile_shp2pgsql():
 
     (filename, srid, encoding) = create_shapefile(request.files['file'])
 
-    user_name = user_from_request(request)
+    user_name = user_from_request(request) or 'client_test'
     table_name = shape2pgsql(CONFIG, user_name, filename, srid, encoding)
     geojson_data = geojson_from_table(CONN_STRING, table_name)
 
