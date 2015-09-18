@@ -11,3 +11,11 @@ Encoding:
 Is done at the database level.
 It should be UTF-8.
 Need to check translation errors.
+
+Reprojecting
+------
+```
+CREATE TABLE mygov1.streetshighways892015_749_210833_4326 AS 
+  SELECT ST_Transform(geom,4326) AS the_geom 
+  FROM mygov1.streetshighways892015_749_210833;
+```

@@ -45,7 +45,7 @@
         "dijit/layout/ContentPane",
         "dojo/domReady!"
       ],
-        function (GeoJsonLayer,
+        function (GeoJsonLayer, 
         esriConfig, InfoTemplate, Map, request, scaleUtils, FeatureLayer,
         SimpleRenderer, PictureMarkerSymbol, SimpleFillSymbol, SimpleLineSymbol,
         dom, JSON, on, parser, sniff, arrayUtils, Color, lang
@@ -148,8 +148,8 @@
               //If you want to persist the feature collection when you reload browser you could store the collection in
               //local storage by serializing the layer using featureLayer.toJson()  see the 'Feature Collection in Local Storage' sample
               //for an example of how to work with local storage.
-              var fullExtent;
-              var layers = [];
+              // var fullExtent;
+              // var layers = [];
 
               // arrayUtils.forEach(featureCollection.layers, function (layer) {
 
@@ -169,9 +169,8 @@
               //     fullExtent.union(featureLayer.fullExtent) : featureLayer.fullExtent;
               //   layers.push(featureLayer);
 
-              map.addLayers(layer);
+              map.addLayer(layer);
               // map.setExtent(fullExtent.expand(1.25), true);
-
               dom.byId('upload-status').innerHTML = "";
             }
 
