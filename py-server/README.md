@@ -1,6 +1,6 @@
 Upload shapefile ZIP
 -------
-`curl -i -F file=@/vagrant/shapefiles/streetshighways.zip http://localhost:4002/api/import/shp2pgsql`
+`curl -i -H 'X-MyGov-Authentication: mygov1' -F file=@/vagrant/shapefiles/streetshighways.zip http://localhost:4002/api/import/shp2pgsql`
 
 Metadata SQL Queries
 -------
