@@ -6,32 +6,58 @@ This is mostly a Python wrapper for the shp2pgsql command line utility.
 
 import subprocess
 import util
-from importer_modes import IMPORT_MODE_CREATE, IMPORT_MODE_APPEND,\
-    IMPORT_MODE_STRUCTURE, IMPORT_MODE_DATA, IMPORT_MODE_SPATIAL_INDEX
 
 
-def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1,
+IMPORT_MODES = dict(
+    DROP_CREATE='-d',
+    APPEND='-a',
+    CREATE='-c',
+    PREPARE='-p'
+)
+
+
+def table_exists(connection, full_table_name):
+    cursor = connection.cursor()
+    sql = '''
+        SELECT EXISTS (
+            SELECT 1
+            FROM   pg_catalog.pg_class c
+            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            WHERE  n.nspname = '{schema_name}'
+            AND    c.relname = '{table_name}'
+        );
+    '''
+    [schema_name, table_name] = full_table_name.split('.')
+    cursor.execute(sql.format(schema_name=schema_name, table_name=table_name))
+    exists = cursor.fetchall()[0][0]
+    return exists
+
+
+def create_schema_if_none(cursor, schema):
+    create_schema = '''
+        CREATE SCHEMA IF NOT EXISTS {schema}
+    '''
+    cursor.execute(create_schema.format(schema=schema))
+
+
+def shape_to_pgsql(config, conn, shape_path, table, import_mode, srid=-1,
                    encoding='latin1', log_file=None, batch_size=1000):
-    modeflags = {
-        str(IMPORT_MODE_CREATE): "c",
-        str(IMPORT_MODE_APPEND): "a",
-        str(IMPORT_MODE_STRUCTURE): "p",
-        str(IMPORT_MODE_DATA): "",
-        str(IMPORT_MODE_SPATIAL_INDEX): ""
-    }
 
-    args = [
+    command_args = [
         config['shp2pgsql'],
-        '-' + ''.join([
-            modeflags[f] for f in modeflags.keys() if int(f) & mode]),
+        import_mode,
         '-W', encoding,
         '-s', str(srid) + ':4326',
         shape_path,
         table
     ]
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=log_file)
+
+    p = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=log_file)
 
     cursor = conn.cursor()
+    user_schema = table.split('.')[0]
+    create_schema_if_none(cursor, user_schema)
+
     try:
         with p.stdout as stdout:
             for commands in util.groupsgen(util.read_until(stdout, ';'),
@@ -58,7 +84,13 @@ def vacuum_analyze(conn, table):
         conn.set_isolation_level(isolation_level)
 
 
-def shape2pgsql(config, shapefile, srid, encoding):
+def get_import_mode(conn, full_table_name):
+    if table_exists(conn, full_table_name):
+        return IMPORT_MODES['DROP_CREATE']
+    return IMPORT_MODES['CREATE']
+
+
+def shape2pgsql(config, user_schema, shapefile, srid, encoding):
     import psycopg2
     import os.path
 
@@ -67,9 +99,11 @@ def shape2pgsql(config, shapefile, srid, encoding):
         config['db']['user'], config['db']['password']))
 
     table = os.path.splitext(os.path.split(shapefile)[1])[0]
-    full_table_name = config['user'] + '.' + table
+    full_table_name = user_schema + '.' + table
+
+    import_mode = get_import_mode(conn, full_table_name)
     shape_to_pgsql(config, conn, shapefile, full_table_name,
-                   IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
-                   IMPORT_MODE_SPATIAL_INDEX, srid, encoding)
+                   import_mode, srid, encoding)
     vacuum_analyze(conn, full_table_name)
+
     return full_table_name

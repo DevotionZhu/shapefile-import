@@ -57,6 +57,11 @@ def create_shapefile(filestream):
         return shp_file, srid, encoding
 
 
+def user_from_request(request):
+    username = request.headers.get('X-MyGov-Authentication')
+    return username
+
+
 @app.route('/api/import/shp2pgsql', methods=['POST'])
 def import_shapefile_shp2pgsql():
     if request.method != 'POST':
@@ -64,7 +69,8 @@ def import_shapefile_shp2pgsql():
 
     (filename, srid, encoding) = create_shapefile(request.files['file'])
 
-    table_name = shape2pgsql(CONFIG, filename, srid, encoding)
+    user_name = user_from_request(request)
+    table_name = shape2pgsql(CONFIG, user_name, filename, srid, encoding)
     geojson_data = geojson_from_table(CONN_STRING, table_name)
 
     return Response(
@@ -77,16 +83,7 @@ def import_shapefile_ogr2ogr():
     zip_name = '/vagrant/shapefiles/streetshighways.zip'
     filename = create_shapefile(zip_name)
 
-    config = dict(
-        db=dict(
-            user='mygov',
-            name='mygov',
-            password='mygov',
-            host='localhost'),
-        user='mygov1',
-        shp2pgsql='shp2pgsql')
-
-    ogr2ogr(config, filename)
+    ogr2ogr(CONFIG, filename)
     return '200'
 
 

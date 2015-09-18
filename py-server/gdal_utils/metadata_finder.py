@@ -33,6 +33,7 @@ def get_srid_from_prj(prj_file):
 
 
 def get_encoding_from_dbf(dbf_file):
+    default_en = 'LATIN1'
     with open(dbf_file, 'r') as dbf_filef:
         db = Dbf(dbf_filef)
 
@@ -43,7 +44,7 @@ def get_encoding_from_dbf(dbf_file):
                 break
         detector.close()
 
-        encoding = detector.result['encoding']
+        encoding = detector.result['encoding'] or default_en
         if encoding == 'ascii':
             encoding = 'LATIN1'
 
