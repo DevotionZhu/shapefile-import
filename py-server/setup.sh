@@ -17,6 +17,11 @@ install_ubuntu_packages() {
         echo "Installing python mapnik"
         sudo apt-get install -y python-mapnik
     fi
+    if [ $(dpkg-query -W -f='${Status}' python-gdal 2>/dev/null | grep -c "ok installed") -eq 0 ];
+    then
+        echo "Installing python gdal"
+        sudo apt-get install -y python-gdal
+    fi
 }
 
 

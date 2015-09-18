@@ -8,6 +8,7 @@ from shape_importer.shp2pgsql import shape2pgsql
 from shape_importer.tab2pgsql import shape2pgsql as ogr2ogr
 from shape_importer.util import walk2
 from db_utils.postgis import geojson_from_table
+from gdal_utils.metadata_finder import get_srid_from_prj, get_encoding_from_dbf
 
 
 STATIC_FOLDER = '../client'
@@ -38,11 +39,22 @@ def create_shapefile(filestream):
         return
 
     with zipfile.ZipFile(filestream, 'r') as z:
+        shp_file = prj_file = dbf_file = ''
+
         z.extractall(temp_dir)
         _, _, files, _ = walk2(temp_dir).next()
         for f in files:
             if f.endswith('.shp'):
-                return os.path.join(temp_dir, f)
+                shp_file = os.path.join(temp_dir, f)
+            if f.endswith('.prj'):
+                prj_file = os.path.join(temp_dir, f)
+            if f.endswith('.dbf'):
+                dbf_file = os.path.join(temp_dir, f)
+            if shp_file and prj_file and dbf_file:
+                break
+        srid = get_srid_from_prj(prj_file)
+        encoding = get_encoding_from_dbf(dbf_file)
+        return shp_file, srid, encoding
 
 
 @app.route('/api/import/shp2pgsql', methods=['POST'])
@@ -50,9 +62,9 @@ def import_shapefile_shp2pgsql():
     if request.method != 'POST':
         return
 
-    filename = create_shapefile(request.files['file'])
+    (filename, srid, encoding) = create_shapefile(request.files['file'])
 
-    table_name = shape2pgsql(CONFIG, filename)
+    table_name = shape2pgsql(CONFIG, filename, srid, encoding)
     geojson_data = geojson_from_table(CONN_STRING, table_name)
 
     return Response(

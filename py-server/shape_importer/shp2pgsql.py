@@ -11,7 +11,7 @@ from importer_modes import IMPORT_MODE_CREATE, IMPORT_MODE_APPEND,\
 
 
 def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1,
-                   log_file=None, batch_size=1000):
+                   encoding='latin1', log_file=None, batch_size=1000):
     modeflags = {
         str(IMPORT_MODE_CREATE): "c",
         str(IMPORT_MODE_APPEND): "a",
@@ -24,7 +24,7 @@ def shape_to_pgsql(config, conn, shape_path, table, mode, srid=-1,
         config['shp2pgsql'],
         '-' + ''.join([
             modeflags[f] for f in modeflags.keys() if int(f) & mode]),
-        '-W', 'latin1',
+        '-W', encoding,
         '-s', str(srid),
         shape_path,
         table
@@ -58,7 +58,7 @@ def vacuum_analyze(conn, table):
         conn.set_isolation_level(isolation_level)
 
 
-def shape2pgsql(config, shapefile):
+def shape2pgsql(config, shapefile, srid, encoding):
     import psycopg2
     import os.path
 
@@ -70,6 +70,6 @@ def shape2pgsql(config, shapefile):
     full_table_name = config['user'] + '.' + table
     shape_to_pgsql(config, conn, shapefile, full_table_name,
                    IMPORT_MODE_CREATE + IMPORT_MODE_DATA +
-                   IMPORT_MODE_SPATIAL_INDEX)
+                   IMPORT_MODE_SPATIAL_INDEX, srid, encoding)
     vacuum_analyze(conn, full_table_name)
     return full_table_name
