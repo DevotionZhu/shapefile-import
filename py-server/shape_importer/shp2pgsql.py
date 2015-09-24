@@ -6,6 +6,7 @@ This is mostly a Python wrapper for the shp2pgsql command line utility.
 
 import subprocess
 import util
+# import pdb
 
 
 IMPORT_MODES = dict(
@@ -44,7 +45,7 @@ def shape_to_pgsql(config, conn, shape_path, table, import_mode, srid=-1,
                    encoding='latin1', log_file=None, batch_size=1000):
 
     command_args = [
-        config['shp2pgsql'],
+        config['SHAPE2PGSQL'],
         import_mode,
         '-W', encoding,
         '-s', str(srid) + ':4326',
@@ -60,6 +61,8 @@ def shape_to_pgsql(config, conn, shape_path, table, import_mode, srid=-1,
 
     try:
         with p.stdout as stdout:
+            # pdb.set_trace()
+            # print util.read_until(stdout, ';')
             for commands in util.groupsgen(util.read_until(stdout, ';'),
                                            batch_size):
                 command = ''.join(commands).strip()
@@ -95,8 +98,8 @@ def shape2pgsql(config, user_schema, shapefile, srid, encoding):
     import os.path
 
     conn = psycopg2.connect('host=%s dbname=%s user=%s password=%s' % (
-        config['db']['host'], config['db']['name'],
-        config['db']['user'], config['db']['password']))
+        config['DB_HOST'], config['DB_NAME'],
+        config['DB_USER'], config['DB_PASSWORD']))
 
     table = os.path.splitext(os.path.split(shapefile)[1])[0]
     full_table_name = user_schema + '.' + table

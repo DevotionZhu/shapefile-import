@@ -20,8 +20,8 @@ def shape2pgsql(config, shapefile):
         '-f "ESRI Shapefile"',
         shapefile,
         'PG:"host=localhost user=%s port=5432 dbname=%s password=%s"' %
-        (config['db']['user'], config['db']['name'],
-         config['db']['password']),
+        (config['DB_USER'], config['DB_NAME'],
+         config['DB_PASSWORD']),
         '-nln "%s"' % full_table_name
     ]
     print ' '.join(args)

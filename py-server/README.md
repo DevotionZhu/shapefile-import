@@ -1,3 +1,20 @@
+Start App
+---------
+`cd py-server`
+`./start.sh`
+
+Run Tests
+----------
+`cd py-server`
+`python -m coverage run -m unittest discover tests`
+
+Show report in console
+`python -m coverage report —omit=“*/__init__*,tests/*”`
+
+Show report in browser
+`python -m coverage html —omit=“*/__init__*,tests/*”`
+
+
 Upload shapefile ZIP
 -------
 `curl -i -H 'X-MyGov-Authentication: mygov1' -F file=@/vagrant/shapefiles/streetshighways.zip http://localhost:4002/api/import/shp2pgsql`
@@ -15,7 +32,7 @@ Need to check translation errors.
 Reprojecting
 ------
 ```
-CREATE TABLE mygov1.streetshighways892015_749_210833_4326 AS 
-  SELECT ST_Transform(geom,4326) AS the_geom 
+CREATE TABLE mygov1.streetshighways892015_749_210833_4326 AS
+  SELECT ST_Transform(geom,4326) AS the_geom
   FROM mygov1.streetshighways892015_749_210833;
 ```

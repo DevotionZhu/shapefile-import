@@ -10,21 +10,19 @@ from shape_importer.util import walk2
 from db_utils.postgis import geojson_from_table
 from gdal_utils.metadata_finder import get_srid_from_prj, get_encoding_from_dbf
 
+from config import config_by_name
 
 STATIC_FOLDER = '../client'
 ALLOWED_EXTENSIONS = 'zip'
 
-CONN_STRING = 'dbname=mygov user=mygov password=mygov'
-CONFIG = dict(
-    db=dict(
-        user='mygov',
-        name='mygov',
-        password='mygov',
-        host='localhost'),
-    user='mygov1',
-    shp2pgsql='shp2pgsql')
-
 app = Flask(__name__, static_folder=STATIC_FOLDER, static_url_path='')
+app.config.from_envvar('APP_CONFIG_FILE')
+
+CONN_STRING = 'dbname={dbname} user={user} password={password}'.format(
+        dbname = app.config['DB_NAME'],
+        user = app.config['DB_USER'],
+        password = app.config['DB_PASSWORD']
+    )
 
 
 def allowed_file(filename):
@@ -70,7 +68,7 @@ def import_shapefile_shp2pgsql():
     (filename, srid, encoding) = create_shapefile(request.files['file'])
 
     user_name = user_from_request(request) or 'client_test'
-    table_name = shape2pgsql(CONFIG, user_name, filename, srid, encoding)
+    table_name = shape2pgsql(app.config, user_name, filename, srid, encoding)
     geojson_data = geojson_from_table(CONN_STRING, table_name)
 
     return Response(
@@ -83,7 +81,7 @@ def import_shapefile_ogr2ogr():
     zip_name = '/vagrant/shapefiles/streetshighways.zip'
     filename = create_shapefile(zip_name)
 
-    ogr2ogr(CONFIG, filename)
+    ogr2ogr(app.config, filename)
     return '200'
 
 

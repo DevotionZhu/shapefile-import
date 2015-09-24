@@ -1,2 +1,4 @@
 .DS_Store
 *.pyc
+py-server/.coverage
+py-server/htmlcov
