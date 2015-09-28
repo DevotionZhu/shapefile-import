@@ -10,8 +10,6 @@ from shape_importer.util import walk2
 from db_utils.postgis import geojson_from_table
 from gdal_utils.metadata_finder import get_srid_from_prj, get_encoding_from_dbf
 
-from config import config_by_name
-
 STATIC_FOLDER = '../client'
 ALLOWED_EXTENSIONS = 'zip'
 

@@ -5,14 +5,17 @@ Start App
 
 Run Tests
 ----------
+First time running of the tests, please set up from console
+export APP_CONFIG_FILE=/vagrant/shapefile-import/config/testing.py
+
 `cd py-server`
 `python -m coverage run -m unittest discover tests`
 
 Show report in console
-`python -m coverage report —omit=“*/__init__*,tests/*”`
+`python -m coverage report —omit=“*/__init__*,tests/*,/usr/*”`
 
 Show report in browser
-`python -m coverage html —omit=“*/__init__*,tests/*”`
+`python -m coverage html —omit=“*/__init__*,tests/*,/usr/*”`
 
 
 Upload shapefile ZIP

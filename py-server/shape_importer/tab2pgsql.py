@@ -11,7 +11,7 @@ import subprocess
 import os.path
 
 # TODO: Find the correct OGR2OGR import command
-def shape2pgsql(config, shapefile):
+def shape2pgsql(config, shapefile): # pragma: no cover
     table = os.path.splitext(os.path.split(shapefile)[1])[0]
     full_table_name = '.'.join([config['user'], table])
 
