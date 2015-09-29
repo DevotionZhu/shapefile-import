@@ -3,3 +3,4 @@
 py-server/.coverage
 py-server/htmlcov
 .coverage
+*__MACOSX*
