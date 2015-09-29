@@ -1,6 +1,8 @@
 import unittest
+import mock
 import os
 from server import *
+from werkzeug.datastructures import FileStorage
 
 class ServerTest(unittest.TestCase):
 
@@ -20,6 +22,42 @@ class ServerTest(unittest.TestCase):
       zipFile = allowed_file('aa.zip')
       self.assertTrue(zipFile)
 
-    def test_create_shapefile(self):
-      aa = create_shapefile(MockZipFile)
-      self.assertEqual(shp_file, "aaa")
+    def test_get_shp_prj_dbf_files(self):
+      current_dir = os.path.dirname(os.path.realpath(__file__))
+      zip_file = current_dir + '/data/StreetsHighways.zip'
+
+      files_to_compare = {
+        'shp': 'data/test/streetshighways892015_749_210833.shp',
+        'dbf': 'data/test/streetshighways892015_749_210833.dbf',
+        'prj': 'data/test/streetshighways892015_749_210833.prj'
+      }
+
+      file = None
+      with open(zip_file, 'rb') as fp:
+        file = FileStorage(fp)
+        files_to_return = get_shp_prj_dbf_files(file, current_dir + '/data/test')
+
+        self.assertIn(files_to_compare['shp'], files_to_return['shp'])
+        self.assertIn(files_to_compare['dbf'], files_to_return['dbf'])
+        self.assertIn(files_to_compare['dbf'], files_to_return['dbf'])
+
+    def test_get_shp_prj_dbf_files_no_filestream(self):
+      files_to_return = get_shp_prj_dbf_files(None, '/data/test')
+      self.assertEqual(files_to_return, {})
+
+    def test_get_shp_prj_dbf_files_no_zipfile(self):
+      current_dir = os.path.dirname(os.path.realpath(__file__))
+      txt_file = current_dir + '/data/StreetsHighways.txt'
+
+      file = None
+      with open(txt_file, 'rb') as fp:
+        file = FileStorage(fp)
+        files_to_return = get_shp_prj_dbf_files(file, current_dir + '/data/test')
+        self.assertEqual(files_to_return, {})
+
+
+
+
+
+
+

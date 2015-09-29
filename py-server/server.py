@@ -1,7 +1,7 @@
 from flask import Flask, request, Response
 import json
-import os
-import tempfile
+import os, fnmatch
+import tempfile, shutil
 import zipfile
 
 from shape_importer.shp2pgsql import shape2pgsql
@@ -22,36 +22,26 @@ CONN_STRING = 'dbname={dbname} user={user} password={password}'.format(
         password = app.config['DB_PASSWORD']
     )
 
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-
-def create_shapefile(filestream):
-    temp_dir = tempfile.mkdtemp()
-
+def get_shp_prj_dbf_files(filestream, temp_dir):
     if not filestream or not allowed_file(filestream.filename):
-        return
+        return {}
 
     with zipfile.ZipFile(filestream, 'r') as z:
-        shp_file = prj_file = dbf_file = ''
-
         z.extractall(temp_dir)
-        _, _, files, _ = walk2(temp_dir).next()
-        for f in files:
-            if f.endswith('.shp'):
-                shp_file = os.path.join(temp_dir, f)
-            if f.endswith('.prj'):
-                prj_file = os.path.join(temp_dir, f)
-            if f.endswith('.dbf'):
-                dbf_file = os.path.join(temp_dir, f)
-            if shp_file and prj_file and dbf_file:
-                break
-        srid = get_srid_from_prj(prj_file)
-        encoding = get_encoding_from_dbf(dbf_file)
-        return shp_file, srid, encoding
 
+        files_to_return = {}
+        patterns = ['[a-zA-Z]*.shp', '[a-zA-Z]*.prj', '[a-zA-Z]*.dbf']
+
+        for path, dirs, files in os.walk(os.path.abspath(temp_dir)):
+            for extension in patterns:
+                for filename in fnmatch.filter(files, extension):
+                    files_to_return[extension[-3:]] = os.path.join(path, filename)
+
+        return files_to_return
 
 def user_from_request(request):
     username = request.headers.get('X-MyGov-Authentication')
@@ -63,7 +53,17 @@ def import_shapefile_shp2pgsql():
     if request.method != 'POST':
         return
 
-    (filename, srid, encoding) = create_shapefile(request.files['file'])
+    temp_dir = tempfile.mkdtemp()
+    files = get_shp_prj_dbf_files(request.files['file'], temp_dir)
+
+    if not files['shp']:
+        return
+
+    filename = files['shp']
+    srid = get_srid_from_prj(files['prj'] or '')
+    encoding = get_encoding_from_dbf(files['dbf'] or '')
+
+    shutil.rmtree(os.path.abspath(temp_dir))
 
     user_name = user_from_request(request) or 'client_test'
     table_name = shape2pgsql(app.config, user_name, filename, srid, encoding)
@@ -75,7 +75,7 @@ def import_shapefile_shp2pgsql():
 
 # TODO: Make this work
 @app.route('/api/import/ogr2ogr')
-def import_shapefile_ogr2ogr():
+def import_shapefile_ogr2ogr(): # pragma: no cover
     zip_name = '/vagrant/shapefiles/streetshighways.zip'
     filename = create_shapefile(zip_name)
 
@@ -83,5 +83,5 @@ def import_shapefile_ogr2ogr():
     return '200'
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': # pragma: no cover
     app.run(port=4002, host='0.0.0.0', debug=True)
