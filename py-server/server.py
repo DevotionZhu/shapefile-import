@@ -28,7 +28,7 @@ def allowed_file(filename):
 
 def get_shp_prj_dbf_files(filestream, temp_dir):
     if not filestream or not allowed_file(filestream.filename):
-        return {}
+        return
 
     with zipfile.ZipFile(filestream, 'r') as z:
         z.extractall(temp_dir)
@@ -56,19 +56,17 @@ def import_shapefile_shp2pgsql():
     temp_dir = tempfile.mkdtemp()
     files = get_shp_prj_dbf_files(request.files['file'], temp_dir)
 
-    if not files['shp']:
+    if not files or not files['shp']:
         return
 
-    filename = files['shp']
     srid = get_srid_from_prj(files['prj'] or '')
     encoding = get_encoding_from_dbf(files['dbf'] or '')
 
     shutil.rmtree(os.path.abspath(temp_dir))
 
     user_name = user_from_request(request) or 'client_test'
-    table_name = shape2pgsql(app.config, user_name, filename, srid, encoding)
+    table_name = shape2pgsql(app.config, user_name, files['shp'], srid, encoding)
     geojson_data = geojson_from_table(CONN_STRING, table_name)
-
     return Response(
         json.dumps([{'data': geojson_data}]), mimetype='application/json')
 
