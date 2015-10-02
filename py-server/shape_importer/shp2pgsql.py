@@ -6,7 +6,6 @@ This is mostly a Python wrapper for the shp2pgsql command line utility.
 
 import subprocess
 import util
-# import pdb
 
 
 IMPORT_MODES = dict(
@@ -15,30 +14,6 @@ IMPORT_MODES = dict(
     CREATE='-c',
     PREPARE='-p'
 )
-
-
-def table_exists(connection, full_table_name):
-    cursor = connection.cursor()
-    sql = '''
-        SELECT EXISTS (
-            SELECT 1
-            FROM   pg_catalog.pg_class c
-            JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-            WHERE  n.nspname = '{schema_name}'
-            AND    c.relname = '{table_name}'
-        );
-    '''
-    [schema_name, table_name] = full_table_name.split('.')
-    cursor.execute(sql.format(schema_name=schema_name, table_name=table_name))
-    exists = cursor.fetchall()[0][0]
-    return exists
-
-
-def create_schema_if_none(cursor, schema):
-    create_schema = '''
-        CREATE SCHEMA IF NOT EXISTS {schema}
-    '''
-    cursor.execute(create_schema.format(schema=schema))
 
 
 def shape_to_pgsql(config, conn, shape_path, table, import_mode, srid=-1,
@@ -56,13 +31,9 @@ def shape_to_pgsql(config, conn, shape_path, table, import_mode, srid=-1,
     p = subprocess.Popen(command_args, stdout=subprocess.PIPE, stderr=log_file)
 
     cursor = conn.cursor()
-    user_schema = table.split('.')[0]
-    create_schema_if_none(cursor, user_schema)
 
     try:
         with p.stdout as stdout:
-            # pdb.set_trace()
-            # print util.read_until(stdout, ';')
             for commands in util.groupsgen(util.read_until(stdout, ';'),
                                            batch_size):
                 command = ''.join(commands).strip()
@@ -87,24 +58,18 @@ def vacuum_analyze(conn, table):
         conn.set_isolation_level(isolation_level)
 
 
-def get_import_mode(conn, full_table_name):
-    if table_exists(conn, full_table_name):
-        return IMPORT_MODES['DROP_CREATE']
-    return IMPORT_MODES['CREATE']
-
-
-def shape2pgsql(config, user_schema, shapefile, srid, encoding):
+def shape2pgsql(config, shapefile, srid, encoding):
     import psycopg2
-    import os.path
+    import uuid
 
     conn = psycopg2.connect('host=%s dbname=%s user=%s password=%s' % (
         config['DB_HOST'], config['DB_NAME'],
         config['DB_USER'], config['DB_PASSWORD']))
 
-    table = os.path.splitext(os.path.split(shapefile)[1])[0]
-    full_table_name = user_schema + '.' + table
+    generate_uuid = uuid.uuid4()
+    full_table_name = 'mygov_' + str(generate_uuid).replace('-', '_')
 
-    import_mode = get_import_mode(conn, full_table_name)
+    import_mode = IMPORT_MODES['CREATE']
     shape_to_pgsql(config, conn, shapefile, full_table_name,
                    import_mode, srid, encoding)
     vacuum_analyze(conn, full_table_name)

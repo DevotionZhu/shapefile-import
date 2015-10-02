@@ -97,22 +97,6 @@ class ServerTest(unittest.TestCase):
             self.assertEqual(files_to_return['dbf'], files_to_return['dbf'])
             self.assertEqual(files_to_return['dbf'], files_to_return['dbf'])
 
-    @mock.patch('server.request')
-    def test_user_from_request(self, mock_request):
-        mock_request.headers = {
-            'X-MyGov-Authentication': 'Test User'
-        }
-        user_name = user_from_request(mock_request)
-        self.assertEqual(user_name, 'Test User')
-
-    @mock.patch('server.request')
-    def test_user_from_request_none(self, mock_request):
-        mock_request.headers = {
-            'No-MyGov-Authentication': ''
-        }
-        user_name = user_from_request(mock_request)
-        self.assertEqual(user_name, None)
-
     @mock.patch('server.extract_zip')
     @mock.patch('server.shutil')
     @mock.patch('server.tempfile')
@@ -158,9 +142,7 @@ class ServerTest(unittest.TestCase):
 
     @mock.patch('server.geojson_from_table')
     @mock.patch('server.shape2pgsql')
-    @mock.patch('server.user_from_request')
-    def test_get_geojson(self, mock_user, mock_shape2pgsql, mock_geojson):
-        mock_user.return_value = None
+    def test_get_geojson(self, mock_shape2pgsql, mock_geojson):
         mock_shape2pgsql.return_value = 'table_test'
         mock_geojson.return_value = self.geojson_data
         geojson = get_geojson({}, {'shape': '', 'srid': '', 'encoding': ''})
