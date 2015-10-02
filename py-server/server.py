@@ -54,11 +54,6 @@ def extract_zip(filestream):
         return files_to_return
 
 
-def user_from_request(request):
-    username = request.headers.get('X-MyGov-Authentication')
-    return username
-
-
 def get_data_from_files(file):
     # temp_dir = tempfile.mkdtemp()
     files = extract_zip(file)
@@ -79,9 +74,8 @@ def get_data_from_files(file):
 
 
 def get_geojson(request, data):
-    user_name = user_from_request(request) or 'client_test'
     table_name = shape2pgsql(
-        app.config, user_name, data['shape'], data['srid'], data['encoding']
+        app.config, data['shape'], data['srid'], data['encoding']
     )
     geojson_data = geojson_from_table(CONN_STRING, table_name)
 
