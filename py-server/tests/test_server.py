@@ -63,7 +63,7 @@ class ServerTest(unittest.TestCase):
     # test_get_shp_prj_dbf_files_from_tree_has_prj
 
     def test_extract_zip_no_filestream(self):
-        files_to_return = extract_zip(None, '/data/test')
+        files_to_return = extract_zip(None)
         self.assertEqual(files_to_return, None)
 
     def test_extract_zip_no_zip_file(self):
@@ -73,7 +73,7 @@ class ServerTest(unittest.TestCase):
         file = None
         with open(txt_file, 'rb') as fp:
             file = FileStorage(fp)
-            files_to_return = extract_zip(file, current_dir + '/data/test')
+            files_to_return = extract_zip(file)
             self.assertEqual(files_to_return, None)
 
     @mock.patch('server.get_shp_prj_dbf_files_from_tree')
@@ -91,7 +91,7 @@ class ServerTest(unittest.TestCase):
         with open(zip_file, 'rb') as fp:
             file = FileStorage(fp)
             mock_get_shp_prj_dbf_files_from_tree.return_value = files_to_return
-            files_to_return = extract_zip(file, current_dir + '/data/test')
+            files_to_return = extract_zip(file)
 
             self.assertEqual(files_to_return['shp'], files_to_return['shp'])
             self.assertEqual(files_to_return['dbf'], files_to_return['dbf'])

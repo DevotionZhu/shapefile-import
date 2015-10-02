@@ -41,10 +41,12 @@ def get_shp_prj_dbf_files_from_tree(temp_dir):
     return files_to_return
 
 
-def extract_zip(filestream, temp_dir):
+def extract_zip(filestream):
+
     if not filestream or not allowed_file(filestream.filename):
         return
 
+    temp_dir = tempfile.mkdtemp()
     with zipfile.ZipFile(filestream, 'r') as z:
         z.extractall(temp_dir)
         files_to_return = get_shp_prj_dbf_files_from_tree(temp_dir)
@@ -58,11 +60,11 @@ def user_from_request(request):
 
 
 def get_data_from_files(file):
-    temp_dir = tempfile.mkdtemp()
-    files = extract_zip(file, temp_dir)
+    # temp_dir = tempfile.mkdtemp()
+    files = extract_zip(file)
 
     if not files or not files['shp']:
-        shutil.rmtree(os.path.abspath(temp_dir))
+        # shutil.rmtree(os.path.abspath(temp_dir))
         return
 
     data = {
@@ -71,7 +73,7 @@ def get_data_from_files(file):
     data['srid'] = get_srid_from_prj(files['prj'] or '')
     data['encoding'] = get_encoding_from_dbf(files['dbf'] or '')
 
-    shutil.rmtree(os.path.abspath(temp_dir))
+    # shutil.rmtree(os.path.abspath(temp_dir))
 
     return data
 
