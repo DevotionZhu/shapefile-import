@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 import json
 import os
 import fnmatch
@@ -7,6 +7,7 @@ import shutil
 import zipfile
 
 
+from error import InvalidUsage
 from shape_importer.shp2pgsql import shape2pgsql
 from shape_importer.tab2pgsql import shape2pgsql as ogr2ogr
 from db_utils.postgis import geojson_from_table
@@ -49,7 +50,10 @@ def get_shp_prj_dbf_shx_files_from_tree(temp_dir):
         not files_to_return['prj'] or \
         not files_to_return['dbf'] or \
             not files_to_return['shx']:
-            return None
+            raise InvalidUsage(
+                'A shapefile must contain shp, prj, dbf, shx files',
+                status_code=500
+            )
 
     return files_to_return
 
@@ -57,7 +61,10 @@ def get_shp_prj_dbf_shx_files_from_tree(temp_dir):
 def extract_zip(filestream, temp_dir):
 
     if not filestream or not allowed_file(filestream.filename):
-        return
+        raise InvalidUsage(
+            'No filestream or no zipfile',
+            status_code=500
+        )
 
     with zipfile.ZipFile(filestream, 'r') as z:
         z.extractall(temp_dir)
@@ -67,8 +74,6 @@ def extract_zip(filestream, temp_dir):
 
 
 def get_shape_srid_encoding(files, temp_dir):
-    if not files:
-        return
 
     data = {
         'shape': files['shp']
@@ -118,20 +123,25 @@ def get_data_from_request(files_from_request, temp_dir):
     if len(files) is 4:
         data = get_data_from_files(files, temp_dir)
 
+    if not data:
+        raise InvalidUsage(
+            'Please upload a zip or 4 files(shp, dbf, shx, prj)',
+            status_code=500
+        )
     return data
 
 
 @app.route('/api/import/shp2pgsql', methods=['POST'])
 def import_shapefile_shp2pgsql():
     if request.method != 'POST':
-        return
+        raise InvalidUsage('Method allowed is POST', status_code=405)
 
     temp_dir = tempfile.mkdtemp()
 
     data = get_data_from_request(request.files, temp_dir)
     if not data or not data['shape']:
         shutil.rmtree(os.path.abspath(temp_dir))
-        return
+        raise InvalidUsage('No data or no shp file found', status_code=500)
 
     geojson_data = get_geojson(request, data)
     shutil.rmtree(os.path.abspath(temp_dir))
@@ -139,6 +149,12 @@ def import_shapefile_shp2pgsql():
     return Response(
         json.dumps([{'data': geojson_data}]), mimetype='application/json')
 
+
+@app.errorhandler(InvalidUsage)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 # TODO: Make this work
 @app.route('/api/import/ogr2ogr')

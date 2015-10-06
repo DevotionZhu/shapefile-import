@@ -57,8 +57,10 @@ class ServerGetShpPrjDbfShxFilesFromTreeTest(ServerBasicTest):
         self.assertIn(files_to_compare['shx'], files_to_return['shx'])
 
     def test_has_none(self):
-        files_to_return = get_shp_prj_dbf_shx_files_from_tree('/data/fake')
-        self.assertEqual(files_to_return, None)
+        self.assertRaises(
+            InvalidUsage,
+            lambda: get_shp_prj_dbf_shx_files_from_tree('/data/fake')
+        )
 
     # @TODO other tests
     # test_get_shp_prj_dbf_files_from_tree_has_shp
@@ -69,8 +71,7 @@ class ServerGetShpPrjDbfShxFilesFromTreeTest(ServerBasicTest):
 class ServerExtractZipTest(ServerBasicTest):
 
     def test_no_filestream(self):
-        files_to_return = extract_zip(None, '/temp')
-        self.assertEqual(files_to_return, None)
+        self.assertRaises(InvalidUsage, lambda: extract_zip(None, '/temp'))
 
     def test_no_zip_file(self):
         current_dir = os.path.dirname(os.path.realpath(__file__))
@@ -79,8 +80,7 @@ class ServerExtractZipTest(ServerBasicTest):
         file = None
         with open(txt_file, 'rb') as fp:
             file = FileStorage(fp)
-            files_to_return = extract_zip(file, '/temp')
-            self.assertEqual(files_to_return, None)
+            self.assertRaises(InvalidUsage, lambda: extract_zip(file, '/temp'))
 
     @mock.patch('server.get_shp_prj_dbf_shx_files_from_tree')
     def test_all_good(self, mock_get_shp_prj_dbf_shx_files_from_tree):
@@ -103,10 +103,6 @@ class ServerExtractZipTest(ServerBasicTest):
 
 class ServerGetShapeSridEncoding(ServerBasicTest):
 
-    def test_none(self):
-        data = get_shape_srid_encoding(None, '/temp')
-        self.assertEqual(data, None)
-
     @mock.patch('server.get_encoding_from_dbf')
     @mock.patch('server.get_srid_from_prj')
     def test_all_good(self, mock_srid, mock_encoding):
@@ -125,8 +121,10 @@ class ServerGetDataFromRequestTest(ServerBasicTest):
     @mock.patch('server.request')
     def test_none(self, mock_request):
         mock_request.files.getlist('file').return_value = []
-        data = get_data_from_request(mock_request.files, '/temp')
-        self.assertEqual(data, None)
+        self.assertRaises(
+            InvalidUsage,
+            lambda: get_data_from_request(mock_request.files, '/temp')
+        )
 
     # @mock.patch('server.get_data_from_zipfile')
     # @mock.patch('server.request')
@@ -150,8 +148,7 @@ class ServerImportShapefileShp2pgsql(ServerBasicTest):
     @mock.patch('server.request')
     def test_no_post_method(self, mock_request):
         mock_request.method = 'GET'
-        response = import_shapefile_shp2pgsql()
-        self.assertEqual(response, None)
+        self.assertRaises(InvalidUsage, lambda: import_shapefile_shp2pgsql())
 
     @mock.patch('server.shutil')
     @mock.patch('server.tempfile')
@@ -164,8 +161,8 @@ class ServerImportShapefileShp2pgsql(ServerBasicTest):
         mock_get_data.return_value = None
         mock_tempfile.mkdtemp.return_value = '/data/test'
         mock_shutil.rmtree.return_value = True
-        response = import_shapefile_shp2pgsql()
-        self.assertEqual(response, None)
+
+        self.assertRaises(InvalidUsage, lambda: import_shapefile_shp2pgsql())
 
     @mock.patch('server.shutil')
     @mock.patch('server.tempfile')
@@ -178,8 +175,8 @@ class ServerImportShapefileShp2pgsql(ServerBasicTest):
         mock_get_data.return_value = {}
         mock_tempfile.mkdtemp.return_value = '/data/test'
         mock_shutil.rmtree.return_value = True
-        response = import_shapefile_shp2pgsql()
-        self.assertEqual(response, None)
+
+        self.assertRaises(InvalidUsage, lambda: import_shapefile_shp2pgsql())
 
     @mock.patch('server.shutil')
     @mock.patch('server.tempfile')
@@ -266,3 +263,12 @@ class ServerOtherTest(ServerBasicTest):
         mock_geojson.return_value = self.geojson_data
         geojson = get_geojson({}, {'shape': '', 'srid': '', 'encoding': ''})
         self.assertEqual(geojson, self.geojson_data)
+
+# @todo Make it work
+# class ServerErrorHandlingTest(ServerBasicTest):
+#     def test_handle_invalid_usage(self):
+#         err = dict(
+#             'No filestream or no zipfile',
+#             # status_code=500
+#         )
+#         handle_invalid_usage(err)
