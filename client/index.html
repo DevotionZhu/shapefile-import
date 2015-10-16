@@ -45,7 +45,7 @@
         "dijit/layout/ContentPane",
         "dojo/domReady!"
       ],
-        function (GeoJsonLayer, 
+        function (GeoJsonLayer,
         esriConfig, InfoTemplate, Map, request, scaleUtils, FeatureLayer,
         SimpleRenderer, PictureMarkerSymbol, SimpleFillSymbol, SimpleLineSymbol,
         dom, JSON, on, parser, sniff, arrayUtils, Color, lang
@@ -68,7 +68,8 @@
               generateFeatureCollection(fileName);
             }
             else {
-              dom.byId('upload-status').innerHTML = '<p style="color:red">Add shapefile as .zip file</p>';
+              generateFeatureCollection(fileName);
+              // dom.byId('upload-status').innerHTML = '<p style="color:red">Add shapefile as .zip file</p>';
             }
           });
 
@@ -221,7 +222,7 @@
               <div class="field">
                   <label class="file-upload">
                       <span><strong>Add File</strong></span>
-                      <input type="file" name="file" id="inFile" />
+                      <input type="file" name="file" id="inFile" multiple />
                   </label>
               </div>
               </form>
